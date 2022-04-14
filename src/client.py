@@ -17,7 +17,7 @@ from sklearn.model_selection import train_test_split
 
 
 
-class Client():
+class trainClient():
     def __init__(self, client_id : int, update_config : dict, weights, round : int, c):
         self.client_id = client_id
         self.update_config = update_config
@@ -37,32 +37,32 @@ class Client():
     #         myDict = pickle.load(fo, encoding='latin1')
     #     return myDict
 
-    @tf.function
+    # @tf.function
     def train_step(self,x, y):
         with tf.GradientTape() as tape:
             logits = self.model(x, training=True)
             loss_value = self.loss_fn(y, logits)
         grads = tape.gradient(loss_value, self.model.trainable_weights)
-        # print(grads)
-        # Scaffold
+
+        scaffold_grads = [grads[j].numpy() for j in range(len(grads))] 
+        #SCAFFOLD
         if type(self.global_c) == int:
-            self.global_c = list()
-            for i in range(len(grads)):
-                self.global_c.append(tf.zeros_like(grads[i]))
-            self.global_c = tf.convert_to_tensor(self.global_c)
-            self.local_c = copy.deepcopy(self.global_c)
-            
-            # self.global_c = tf.zeros_like(grads)
-        # if type(self.local_c) == int:
-        #     self.local_c = list()
-        #     for i in range(len(grads))
-        #     self.local_c = tf.zeros_like(grads)
-        grads = grads + self.global_c - self.local_c
-        self.optimizer.apply_gradients(zip(grads, model.trainable_weights))
+            self.local_c = tf.nest.map_structure(lambda grad : tf.zeros_like(grad), scaffold_grads)
+            self.global_c = tf.nest.map_structure(lambda grad : tf.zeros_like(grad), scaffold_grads)
+            # self.local_c = np.zeros_like(scaffold_grads)
+            # self.global_c = np.zeros_like(scaffold_grads)
+        
+        scaffold_grads = tf.nest.map_structure(lambda grad, global_c, local_c : grad + global_c - local_c, 
+                                                scaffold_grads, self.global_c, self.local_c)
+
+        # scaffold_grads = scaffold_grads + self.global_c - self.local_c
+
+        # self.optimizer.apply_gradients(zip(grads, self.model.trainable_weights))
+        self.optimizer.apply_gradients(zip(scaffold_grads, self.model.trainable_weights))
         self.train_acc_metric.update_state(y, logits)
         return loss_value
 
-    @tf.function
+    # @tf.function
     def test_step(self, x, y):
         self.val_logits = self.model(x, training = False)
         self.val_acc_metric.update_state(y, self.val_logits)
@@ -120,19 +120,33 @@ class Client():
         return self.update
     
     def cal_c(self, diff):
-        self.local_c = self.local_c - self.global_c + \
-        (1/(self.update_config['learning_rate'] * self.round) * diff)
+        self.local_c = tf.nest.map_structure(lambda local_c, global_c, dif: local_c - global_c + \
+                                                (1/(self.update_config['learning_rate'] * self.round) * dif), 
+                                                self.local_c, self.global_c, diff)
+        # self.local_c = self.local_c - self.global_c + \
+        # (1/(self.update_config['learning_rate'] * self.round) * diff)
         
     def send_update(self):
         diff = self.diff_weights()
         self.cal_c(diff)
         # print(self.local_c)
-        diff_np = np.asarray(os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/diff.npy')),diff)
-        np.save(diff_np)
+        # diff_np = np.asarray(os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/diff.npy')),np.expand_dims(diff, axis=0))
+        np.save(os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/diff.npy')),diff)
         print('save diff')
         return diff, self.local_c
         
+def get_client(update_config, init_weights):
+    return trainClient(client_id = 1, update_config = update_config, weights = init_weights, round = 1, c = 0)
         
+class predictClient():
+    def __init__(self):
+        self.model =model.get_convnext_model(input_shape=self.update_config['img_shape'],
+                                                    num_classes = self.update_config['num_classes'])
+        self.weight_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/convnext'))            
+        self.model.set_weights(self.weight_path)
+    def predict(self, img):
+        return self.model.predict(img)
+
 if __name__ == '__main__':
     gpus = tf.config.experimental.list_physical_devices('GPU')
     if gpus:
@@ -174,5 +188,5 @@ if __name__ == '__main__':
     # model_weights_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/convnext'))
     # models.save(model_file_path)
     # models.save_weights(model_weights_path)
-    client = Client(client_id = 1, update_config = update_config, weights = init_weights, round = 1, c = 0)
+    client = trainClient(client_id = 1, update_config = update_config, weights = init_weights, round = 1, c = 0)
     client.send_update()
