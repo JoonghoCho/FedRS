@@ -18,10 +18,12 @@ class Client():
         self.update_config = update_config
         # self.trainData = self.unpickle(os.path.join('/home/joongho/FL/', 'data/clients/client' + str(self.client_id)))
         # self.trainData = self.unpickle(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data/clients/client' + str(self.client_id)))
-        file_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('data/clients/client' + str(self.client_id)))
-        self.train_DS, self.val_DS = utils.data_loader(file_path, 
-                                                    img_size = (self.update_config['img_shape'][0], self.update_config['img_shape'][1]),
-                                                    num_classes=self.update_config['num_classes'])
+        self.file_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('data/clients/client' + str(self.client_id)))
+        if not os.path.exists(os.path.dirname(self.file_path)):
+            os.makedirs(os.path.dirname(self.file_path))
+        # self.train_DS, self.val_DS = utils.data_loader(self.file_path, 
+        #                                             img_size = (self.update_config['img_shape'][0], self.update_config['img_shape'][1]),
+        #                                             num_classes=self.update_config['num_classes'])
         # self.pre_weights = weights
         self.round = round
         self.global_c = c
@@ -72,7 +74,9 @@ class Client():
         self.val_acc_metric.update_state(y, self.val_logits)
 
     def update_model(self):
-
+        self.train_DS, self.val_DS = utils.data_loader(self.file_path, 
+                                                    img_size = (self.update_config['img_shape'][0], self.update_config['img_shape'][1]),
+                                                    num_classes=self.update_config['num_classes'])
         # self.model.set_weights(self.pre_weights)
         self.optimizer = tf.keras.optimizers.Adam(learning_rate = self.update_config['learning_rate'])
         self.loss_fn = tf.keras.losses.CategoricalCrossentropy()

@@ -60,6 +60,7 @@ if __name__ == '__main__':
     filepath = '/home/joongho/FL/pepsi.png'
     img = cv2.imread(filepath, cv2.IMREAD_COLOR)
     dst, prediction, client = predict(img)
+    print(prediction)
     cv2.imwrite('.prediction.jpg', dst)
     if prediction == False:
         train_client(client)
