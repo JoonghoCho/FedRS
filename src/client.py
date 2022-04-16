@@ -13,10 +13,6 @@ import utils
 
 from sklearn.model_selection import train_test_split
 
-
-
-
-
 class trainClient():
     def __init__(self, client_id : int, update_config : dict, weights, round : int, c):
         self.client_id = client_id
@@ -109,6 +105,10 @@ class trainClient():
 
 
         self.weights = self.model.get_weights()
+        self.weights_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/clients{}/weights/weight'.format(self.client_id)))
+        if not os.path.exists(os.path.dirname(self.weights_path)):
+            os.makedirs(os.path.dirname(self.weights_path))
+        self.model.save_weights(self.weights_path)
         # self.weights = np.array(self.weights[0])
 
     def diff_weights(self):
@@ -126,26 +126,50 @@ class trainClient():
         # self.local_c = self.local_c - self.global_c + \
         # (1/(self.update_config['learning_rate'] * self.round) * diff)
         
-    def send_update(self):
+    def save_update(self):
         diff = self.diff_weights()
         self.cal_c(diff)
         # print(self.local_c)
         # diff_np = np.asarray(os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/diff.npy')),np.expand_dims(diff, axis=0))
-        np.save(os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/diff.npy')),diff)
-        print('save diff')
+        self.diff_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/client{}/update/diff.npy'.format(self.client_id)))
+        self.c_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/client{}/c/c.npy'.format(self.client_id))) 
+
+        if not os.path.exists(os.path.dirname(self.diff_path)):
+            os.makedirs(os.path.dirname(self.diff_path))
+        
+        if not os.path.exists(os.path.dirname(self.c_path)):
+            os.makedirs(os.path.dirname(self.c_path))
+
+        np.save(self.diff_path, diff)
+        np.save(self.c_path , self.local_c)
+        
+        # print('save diff')
         return diff, self.local_c
         
 def get_client(update_config, init_weights):
     return trainClient(client_id = 1, update_config = update_config, weights = init_weights, round = 1, c = 0)
         
 class predictClient():
-    def __init__(self):
+    def __init__(self, img, class_dict):
         self.model =model.get_convnext_model(input_shape=self.update_config['img_shape'],
                                                     num_classes = self.update_config['num_classes'])
-        self.weight_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/convnext'))            
+        self.weight_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/diff'))  
+        self.img = img
+        self.class_dict = class_dict
+
+
         self.model.set_weights(self.weight_path)
-    def predict(self, img):
-        return self.model.predict(img)
+
+    def predict(self):
+        img = utils.preprocessData(self.img)
+        self.prediction = self.model.predict(img)
+
+    def knowledge(self):
+        self.prediction()
+        if np.max(self.prediction) < 0.5:
+            return False
+        else :
+            return self.class_dict[np.argmax(self.prediction)]
 
 if __name__ == '__main__':
     gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -156,7 +180,6 @@ if __name__ == '__main__':
         except RuntimeError as e:
             # 프로그램 시작시에 접근 가능한 장치가 설정되어야만 합니다
             print(e)
-
 
     update_config = {
         'seed' : 0,
@@ -172,7 +195,6 @@ if __name__ == '__main__':
         'frac_of_clients' : 100,
         'num_of_round' : 10,
     }
-
 
     models = model.get_convnext_model(input_shape=update_config['img_shape'],
                                                     num_classes = update_config['num_classes'])

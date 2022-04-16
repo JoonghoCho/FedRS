@@ -1,0 +1,80 @@
+Found 50000 files belonging to 10 classes.
+Using 40000 files for training.
+Found 50000 files belonging to 10 classes.
+Using 10000 files for validation.
+round : 0 start
+Found 15000 files belonging to 3 classes.
+Using 12000 files for training.
+Found 15000 files belonging to 3 classes.
+Using 3000 files for validation.
+Found 15000 files belonging to 3 classes.
+Using 12000 files for training.
+Found 15000 files belonging to 3 classes.
+Using 3000 files for validation.
+Found 5000 files belonging to 1 classes.
+Using 4000 files for training.
+Found 5000 files belonging to 1 classes.
+Using 1000 files for validation.
+client id : 1
+
+Start of epoch 0
+Training loss (for one batch) at step 0: 3.6804
+Seen so far: 32 samples
+Training loss (for one batch) at step 200: 1.0249
+Seen so far: 6432 samples
+Training acc over epoch: 0.4563
+Validation acc: 0.5783
+Time taken: 207.83s
+
+Start of epoch 1
+Training loss (for one batch) at step 0: 0.8285
+Seen so far: 32 samples
+Training loss (for one batch) at step 200: 0.9977
+Seen so far: 6432 samples
+Training acc over epoch: 0.6504
+Validation acc: 0.7217
+Time taken: 203.10s
+/home/joongho/.local/lib/python3.8/site-packages/numpy/lib/npyio.py:518: VisibleDeprecationWarning: Creating an ndarray from ragged nested sequences (which is a list-or-tuple of lists-or-tuples-or ndarrays with different lengths or shapes) is deprecated. If you meant to do this, you must specify 'dtype=object' when creating the ndarray.
+  arr = np.asanyarray(arr)
+client id : 2
+
+Start of epoch 0
+Training loss (for one batch) at step 0: 3.3902
+Seen so far: 32 samples
+Training loss (for one batch) at step 200: 1.1186
+Seen so far: 6432 samples
+Training acc over epoch: 0.3382
+Validation acc: 0.3413
+Time taken: 211.50s
+
+Start of epoch 1
+Training loss (for one batch) at step 0: 1.1152
+Seen so far: 32 samples
+Training loss (for one batch) at step 200: 1.0925
+Seen so far: 6432 samples
+Training acc over epoch: 0.3294
+Validation acc: 0.3413
+Time taken: 210.20s
+client id : 3
+
+Start of epoch 0
+Training loss (for one batch) at step 0: 4.2806
+Seen so far: 32 samples
+Training acc over epoch: 0.9925
+Validation acc: 1.0000
+Time taken: 74.90s
+
+Start of epoch 1
+Training loss (for one batch) at step 0: 0.0000
+Seen so far: 32 samples
+Training acc over epoch: 1.0000
+Validation acc: 1.0000
+Time taken: 72.47s
+Traceback (most recent call last):
+  File "src/server.py", line 133, in <module>
+    server.fl()
+  File "src/server.py", line 103, in fl
+    self.aggregate_model()
+  File "src/server.py", line 77, in aggregate_model
+    agg_c.aapend(copy.deppcopy(c))
+AttributeError: 'list' object has no attribute 'aapend'

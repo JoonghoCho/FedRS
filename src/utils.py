@@ -5,6 +5,7 @@ import os
 import random
 import copy
 import tensorflow as tf
+import cv2
 
 def createFolder(directory):
     try:
@@ -103,6 +104,11 @@ def data_loader(file_path, img_size=(100, 100), num_classes=10, train = True):
     else :
         return normalized_val_ds
 
+def preprocessData(img):
+    img = cv2.resize(img, dsize=(100, 100))
+    normalized_img= img/255
+    return normalized_img
+
 if __name__ == '__main__':
 
     dir_path = os.path.dirname(__file__)
@@ -118,3 +124,9 @@ if __name__ == '__main__':
     }
     read_data = distData(folder_path, client_config)
     read_data.saver()
+
+    # filepath = '/home/joongho/FL/data/clients/client2/3/0.jpg'
+
+    # img = cv2.imread(filepath, cv2.IMREAD_COLOR)
+    # data = preprocessData(img)
+    # print(data.shape)

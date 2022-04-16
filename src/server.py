@@ -58,7 +58,7 @@ class Server():
     
     def broad_weights(self):
         for id in self.id:
-            self.q_client.appendleft(Client(id+1, update_config=self.update_config, weights = self.init_weights, round = self.round, c = self.global_c))
+            self.q_client.appendleft(trainClient(id+1, update_config=self.update_config, weights = self.init_weights, round = self.round, c = self.global_c))
 
     def aggregate_model(self):
         agg_weights = list()
@@ -66,7 +66,7 @@ class Server():
         while self.q_client:
             client = self.q_client.pop()
             print('client id : ' + str(client.client_id))
-            update, update_c = client.send_update()
+            update, update_c = client.save_update()
             self.q_weights.appendleft(update)
             self.q_c.appendleft(update_c)
 
