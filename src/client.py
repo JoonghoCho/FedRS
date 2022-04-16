@@ -155,7 +155,7 @@ class Client():
     def predict(self, img):
         pre_img = utils.preprocessData(img)
         pre_img=np.expand_dims(pre_img, axis=0)
-        print(pre_img.shape)
+        # print(pre_img.shape)
         self.prediction = self.model.predict(pre_img)
         if np.max(self.prediction) < 0.5:
             return False

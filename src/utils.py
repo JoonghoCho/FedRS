@@ -144,7 +144,7 @@ def boundBox(img, show = False, text = None):
         return img_trim
 
 
-def augmentation(img, class_name : str):
+def augmentation(img, class_id):
     np.random.seed(0)
     data_augumentation = ImageDataGenerator(rescale=1./255, 
                                     rotation_range=15,     # 회전
@@ -161,10 +161,10 @@ def augmentation(img, class_name : str):
     x = img
     x = x.reshape((1,) + x.shape)
     i = 0
-    folder_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('data/{}/'.format(class_name))) 
+    folder_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('data/{}/'.format(class_id))) 
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    for batch in data_augumentation.flow(x, batch_size=1, save_to_dir=folder_path, save_prefix=class_name, save_format='jpg'):    #save_to_dir : 이미지 경로,  save_prefix : 이미지 이름
+    for batch in data_augumentation.flow(x, batch_size=1, save_to_dir=folder_path, save_prefix=class_id, save_format='jpg'):    #save_to_dir : 이미지 경로,  save_prefix : 이미지 이름
         i += 1                               
         if i > 100:
             break
