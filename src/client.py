@@ -1,6 +1,5 @@
 from concurrent.futures.process import _process_worker
 import model
-
 import copy
 
 import tensorflow as tf
@@ -13,8 +12,8 @@ import utils
 
 from sklearn.model_selection import train_test_split
 
-class trainClient():
-    def __init__(self, client_id : int, update_config : dict, weights, round : int, c):
+class Client():
+    def __init__(self, client_id : int, update_config : dict, round : int, c, class_dict : dict):
         self.client_id = client_id
         self.update_config = update_config
         # self.trainData = self.unpickle(os.path.join('/home/joongho/FL/', 'data/clients/client' + str(self.client_id)))
@@ -23,10 +22,19 @@ class trainClient():
         self.train_DS, self.val_DS = utils.data_loader(file_path, 
                                                     img_size = (self.update_config['img_shape'][0], self.update_config['img_shape'][1]),
                                                     num_classes=self.update_config['num_classes'])
-        self.pre_weights = weights
+        # self.pre_weights = weights
         self.round = round
         self.global_c = c
         self.local_c = copy.deepcopy(self.global_c)
+        self.model = model.get_convnext_model(input_shape=self.update_config['img_shape'],
+                                            num_classes = self.update_config['num_classes'])
+        self.weight_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/client{}/weights/weight'.format(self.client_id))) 
+        self.class_dict = class_dict
+        if not os.path.exists(os.path.dirname(self.weight_path)):
+            os.makedirs(os.path.dirname(self.weight_path))
+        else:
+            self.model.set_weights(self.weight_path)
+        self.pre_weights = self.model.get_weights()
         tf.random.set_seed(self.update_config['seed'])
     # def unpickle(self, file):
     #     with open(file, 'rb') as fo:
@@ -64,10 +72,8 @@ class trainClient():
         self.val_acc_metric.update_state(y, self.val_logits)
 
     def update_model(self):
-        self.model = model.get_convnext_model(input_shape=self.update_config['img_shape'],
-                                                    num_classes = self.update_config['num_classes'])
-        self.model.set_weights(self.pre_weights)
 
+        # self.model.set_weights(self.pre_weights)
         self.optimizer = tf.keras.optimizers.Adam(learning_rate = self.update_config['learning_rate'])
         self.loss_fn = tf.keras.losses.CategoricalCrossentropy()
         self.train_acc_metric = tf.keras.metrics.CategoricalAccuracy()
@@ -145,31 +151,20 @@ class trainClient():
         
         # print('save diff')
         return diff, self.local_c
-        
-def get_client(update_config, init_weights):
-    return trainClient(client_id = 1, update_config = update_config, weights = init_weights, round = 1, c = 0)
-        
-class predictClient():
-    def __init__(self, img, class_dict):
-        self.model =model.get_convnext_model(input_shape=self.update_config['img_shape'],
-                                                    num_classes = self.update_config['num_classes'])
-        self.weight_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/diff'))  
-        self.img = img
-        self.class_dict = class_dict
 
-
-        self.model.set_weights(self.weight_path)
-
-    def predict(self):
-        img = utils.preprocessData(self.img)
-        self.prediction = self.model.predict(img)
-
-    def knowledge(self):
-        self.prediction()
+    def predict(self, img):
+        pre_img = utils.preprocessData(img)
+        pre_img=np.expand_dims(pre_img, axis=0)
+        print(pre_img.shape)
+        self.prediction = self.model.predict(pre_img)
         if np.max(self.prediction) < 0.5:
             return False
         else :
             return self.class_dict[np.argmax(self.prediction)]
+    
+        
+def get_client(update_config, class_dict):
+    return Client(client_id = 1, update_config = update_config, round = 1, c = 0, class_dict = class_dict)
 
 if __name__ == '__main__':
     gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -187,7 +182,7 @@ if __name__ == '__main__':
         'local_epochs' : 1,
         'local_batch_size' : 100,
         'img_shape' : (100, 100, 3),
-        'learning_rate' : 0.001
+        'learning_rate' : 0.01
     }
 
     fed_config = {
@@ -196,19 +191,32 @@ if __name__ == '__main__':
         'num_of_round' : 10,
     }
 
-    models = model.get_convnext_model(input_shape=update_config['img_shape'],
-                                                    num_classes = update_config['num_classes'])
-    models.compile(
-        optimizer = tf.keras.optimizers.Adam(),
-        loss = 'categorical_crossentropy',
-        metrics = ['acc']
-    )
-    # print(models.summary())
+    # models = model.get_convnext_model(input_shape=update_config['img_shape'],
+    #                                                 num_classes = update_config['num_classes'])
+    # models.compile(
+    #     optimizer = tf.keras.optimizers.Adam(),
+    #     loss = 'categorical_crossentropy',
+    #     metrics = ['acc']
+    # )
+    # # print(models.summary())
 
-    init_weights = models.get_weights()
-    # model_file_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/convnext.h5'))
-    # model_weights_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/convnext'))
-    # models.save(model_file_path)
-    # models.save_weights(model_weights_path)
-    client = trainClient(client_id = 1, update_config = update_config, weights = init_weights, round = 1, c = 0)
-    client.send_update()
+    # init_weights = models.get_weights()
+    # # model_file_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/convnext.h5'))
+    # # model_weights_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/convnext'))
+    # # models.save(model_file_path)
+    # # models.save_weights(model_weights_path)
+    # client = trainClient(client_id = 1, update_config = update_config, weights = init_weights, round = 1, c = 0)
+    # client.send_update()
+    class_dict = {
+        0 : 'Coke',
+        1 : 'Fanta',
+        2 : 'Toreta',
+        3 : 'Powerade'
+    }
+    client = get_client(update_config, class_dict)
+    import cv2
+    filepath = '/home/joongho/FL/pepsi.png'
+    img = cv2.imread(filepath, cv2.IMREAD_COLOR)
+    aug_img = utils.boundBox(img, show = False)
+    # pre_img = utils.preprocessData(aug_img)
+    print(client.predict(aug_img))

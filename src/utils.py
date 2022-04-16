@@ -1,12 +1,11 @@
 import pickle
-from re import T
-import pandas as pd
 import numpy as np
 import os
 import random
 import copy
 import tensorflow as tf
 import cv2
+from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
 
 def createFolder(directory):
     try:
@@ -142,7 +141,33 @@ def boundBox(img, show = False, text = None):
 
     else : 
         img_trim = img[y:y+h, x:x+w]
-        return img_trim, dst
+        return img_trim
+
+
+def augmentation(img, class_name : str):
+    np.random.seed(0)
+    data_augumentation = ImageDataGenerator(rescale=1./255, 
+                                    rotation_range=15,     # 회전
+                                    width_shift_range=0.2,  #좌우 이동
+                                    height_shift_range=0.2,   #상하 이동
+                                    shear_range=0.5,      #상하 이동
+                                    zoom_range=[1.3, 2.0],        #확대 
+                                    horizontal_flip=True,         # 좌우 반전 
+                                    vertical_flip=True,      # 상하 반전
+                                    fill_mode='nearest')          #constant, nearest, reflect, wrap
+
+    # x = img_to_array(img)
+
+    x = img
+    x = x.reshape((1,) + x.shape)
+    i = 0
+    folder_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('data/{}/'.format(class_name))) 
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    for batch in data_augumentation.flow(x, batch_size=1, save_to_dir=folder_path, save_prefix=class_name, save_format='jpg'):    #save_to_dir : 이미지 경로,  save_prefix : 이미지 이름
+        i += 1                               
+        if i > 100:
+            break
 
 if __name__ == '__main__':
 
@@ -164,5 +189,9 @@ if __name__ == '__main__':
 
     img = cv2.imread(filepath, cv2.IMREAD_COLOR)
     boundBox(img, show = True, text = 'pepsi')
+    aug_img = boundBox(img, show = False)
+    augmentation(aug_img, 'pepsi')
+
+
     # data = preprocessData(img)
     # print(data.shape)
