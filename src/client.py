@@ -35,7 +35,7 @@ class Client():
         if not os.path.exists(os.path.dirname(self.weight_path)):
             os.makedirs(os.path.dirname(self.weight_path))
         else:
-            self.model.set_weights(self.weight_path)
+            self.model.load_weights(self.weight_path)
         self.pre_weights = self.model.get_weights()
         tf.random.set_seed(self.update_config['seed'])
     # def unpickle(self, file):
@@ -115,10 +115,10 @@ class Client():
 
 
         self.weights = self.model.get_weights()
-        self.weights_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/clients{}/weights/weight'.format(self.client_id)))
-        if not os.path.exists(os.path.dirname(self.weights_path)):
-            os.makedirs(os.path.dirname(self.weights_path))
-        self.model.save_weights(self.weights_path)
+        # self.weights_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/client{}/weights/weight'.format(self.client_id)))
+        # if not os.path.exists(os.path.dirname(self.weights_path)):
+        #     os.makedirs(os.path.dirname(self.weights_path))
+        self.model.save_weights(self.weight_path)
         # self.weights = np.array(self.weights[0])
 
     def diff_weights(self):

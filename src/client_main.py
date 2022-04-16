@@ -58,9 +58,12 @@ if __name__ == '__main__':
             # 프로그램 시작시에 접근 가능한 장치가 설정되어야만 합니다
             print(e)
     filepath = '/home/joongho/FL/pepsi.png'
-    img = cv2.imread(filepath, cv2.IMREAD_COLOR)
-    dst, prediction, client = predict(img)
-    print(prediction)
-    cv2.imwrite('.prediction.jpg', dst)
-    if prediction == False:
-        train_client(client)
+    while True:
+        img = cv2.imread(filepath, cv2.IMREAD_COLOR)
+        dst, prediction, client = predict(img)
+        print(prediction)
+        cv2.imwrite('.prediction.jpg', dst)
+        if prediction == False:
+            train_client(client)
+        else:
+            break

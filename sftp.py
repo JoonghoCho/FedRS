@@ -1,10 +1,10 @@
 import pysftp
 import time
 
-host = '203.250.148.52' # 호스트명만 입력. sftp:// 는 필요하지 않다.
+host = '203.250.148.120' # 호스트명만 입력. sftp:// 는 필요하지 않다.
 port = 20514 # int값으로 sftp서버의 포트 번호를 입력
-username = 'yujin' # 서버 유저명
-password = 'aisl1234!' # 유저 비밀번호
+username = 'joongho' # 서버 유저명
+password = 'aisl0510!' # 유저 비밀번호
 
 hostkeys = None
 

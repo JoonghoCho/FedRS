@@ -103,7 +103,9 @@ class Server():
             self.aggregate_model()
             self.evaluate()
             
-
+class SLServer():
+    def __init__(self):
+        self.folder_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
             
 if __name__ == '__main__':
     gpus = tf.config.experimental.list_physical_devices('GPU')
