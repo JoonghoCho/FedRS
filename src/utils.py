@@ -1,4 +1,5 @@
 import pickle
+from re import T
 import pandas as pd
 import numpy as np
 import os
@@ -109,24 +110,59 @@ def preprocessData(img):
     normalized_img= img/255
     return normalized_img
 
+def boundBox(img, show = False, text = None):
+    imgray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    imblur = cv2.blur(imgray, (3,3))
+    threshold = 100
+    canny_output = cv2.Canny(imblur, threshold, threshold * 2)
+    contours, hier = cv2.findContours(canny_output, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
+
+    dst = copy.deepcopy(img)
+
+    boundRect = [None]*len(contours)
+
+    area = [1]*len(contours)
+
+    for i in range(len(contours)):
+        boundRect[i] = cv2.boundingRect(contours[i])
+        area[i] = boundRect[i][2] * boundRect[i][3]
+        
+    max_idx = np.argmax(area)
+    x,y,w,h = boundRect[max_idx]
+
+    if show == True:
+        cv2.rectangle(dst,(x,y),(x+w,y+h),(0,0,255),2)
+        cv2.putText(dst, text, (x, y-2), cv2.FONT_HERSHEY_PLAIN, 1,  (0, 255, 0))
+        cv2.imwrite('./bbox.jpeg', dst)
+        # cv2.imshow('src', img)
+        # cv2.imshow('dst', dst)
+        # cv2.waitKey()
+        # cv2.destroyAllWindows()
+        return dst
+
+    else : 
+        img_trim = img[y:y+h, x:x+w]
+        return img_trim, dst
+
 if __name__ == '__main__':
 
     dir_path = os.path.dirname(__file__)
     dir_path = os.path.dirname(dir_path)
     dir_path = os.path.abspath(dir_path)
-    # print(dir_path)
+    print(dir_path)
 
-    folder_path = os.path.join(dir_path, 'CIFAR/cifar-100-python')
-    # print(folder_path)
-    client_config = {
-        'num' : 100,
-        'num_classes' : 30,
-    }
-    read_data = distData(folder_path, client_config)
-    read_data.saver()
+    # folder_path = os.path.join(dir_path, 'CIFAR/cifar-100-python')
+    # # print(folder_path)
+    # client_config = {
+    #     'num' : 100,
+    #     'num_classes' : 30,
+    # }
+    # read_data = distData(folder_path, client_config)
+    # read_data.saver()
 
-    # filepath = '/home/joongho/FL/data/clients/client2/3/0.jpg'
+    filepath = '/home/joongho/FL/pepsi.png'
 
-    # img = cv2.imread(filepath, cv2.IMREAD_COLOR)
+    img = cv2.imread(filepath, cv2.IMREAD_COLOR)
+    boundBox(img, show = True, text = 'pepsi')
     # data = preprocessData(img)
     # print(data.shape)
