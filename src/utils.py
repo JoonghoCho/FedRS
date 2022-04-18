@@ -164,10 +164,12 @@ def augmentation(img, class_id):
     folder_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('data/{}/'.format(class_id))) 
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    for batch in data_augumentation.flow(x, batch_size=1, save_to_dir=folder_path, save_prefix=class_id, save_format='jpg'):    #save_to_dir : 이미지 경로,  save_prefix : 이미지 이름
-        i += 1                               
-        if i > 100:
-            break
+        for batch in data_augumentation.flow(x, batch_size=1, save_to_dir=folder_path, save_prefix=class_id, save_format='jpg'):    #save_to_dir : 이미지 경로,  save_prefix : 이미지 이름
+            i += 1                               
+            if i > 100:
+                break
+    else:
+        pass
 
 if __name__ == '__main__':
 

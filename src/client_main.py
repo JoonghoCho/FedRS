@@ -2,6 +2,8 @@ import client as Client
 import utils
 import cv2
 import tensorflow as tf
+from multiprocessing import Process, Queue
+# from collections import deque
 
 def predict(img):
 
@@ -13,12 +15,6 @@ def predict(img):
         'local_batch_size' : 100,
         'img_shape' : (100, 100, 3),
         'learning_rate' : 0.01
-    }
-
-    fed_config = {
-        'clients_num' : 3,
-        'frac_of_clients' : 100,
-        'num_of_round' : 10,
     }
 
     class_dict = {
@@ -47,23 +43,62 @@ def predict(img):
 def train_client(client):
     client.save_update()
 
+def video(q):
+    name = 'None'
+    cap = cv2.VideoCapture(-1)
+    # filepath = '/home/joongho/FL/pepsi.png'
+    w = round(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    h = round(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = cap.get(cv2.CAP_PROP_FPS) # 카메라에 따라 값이 정상적, 비정상적
+    fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+    delay = round(1000/fps)
+    out = cv2.VideoWriter('output.avi', fourcc, fps, (w, h))
+    while True:
+        # img = cv2.imread(filepath, cv2.IMREAD_COLOR)
+        # dst, prediction, client = predict(img)
+        ret, frame = cap.read()
+        if q :
+            name = q.get()
+        else :
+            pass
+
+        if(ret):
+            # dst, prediction, client = predict(frame)
+            dst = utils.boundBox(frame, show = True, text = name)
+            cv2.imshow('camera', dst)
+            out.write(dst)
+
+
+
+def inputText(q):
+    while True:
+        name = str(input())
+        q.put(name)
+
 if __name__ == '__main__':
 
-    gpus = tf.config.experimental.list_physical_devices('GPU')
-    if gpus:
-    # 텐서플로가 첫 번째 GPU만 사용하도록 제한
-        try:
-            tf.config.experimental.set_visible_devices(gpus[1], 'GPU')
-        except RuntimeError as e:
-            # 프로그램 시작시에 접근 가능한 장치가 설정되어야만 합니다
-            print(e)
-    filepath = '/home/joongho/FL/pepsi.png'
-    while True:
-        img = cv2.imread(filepath, cv2.IMREAD_COLOR)
-        dst, prediction, client = predict(img)
-        print(prediction)
-        cv2.imwrite('.prediction.jpg', dst)
-        if prediction == False:
-            train_client(client)
-        else:
-            break
+    # gpus = tf.config.experimental.list_physical_devices('GPU')
+    # if gpus:
+    # # 텐서플로가 첫 번째 GPU만 사용하도록 제한
+    #     try:
+    #         tf.config.experimental.set_visible_devices(gpus[1], 'GPU')
+    #     except RuntimeError as e:
+    #         # 프로그램 시작시에 접근 가능한 장치가 설정되어야만 합니다
+    # filepath = '/home/joongho/FL/pepsi.png'
+    # while True:
+        # img = cv2.imread(filepath, cv2.IMREAD_COLOR)
+        # dst, prediction, client = predict(img)
+        # if(ret):
+            # dst, prediction, client = predict(frame)
+
+        # print(prediction)
+        # cv2.imwrite('.prediction.jpg', dst)
+    queue = Queue()
+    p1 = Process(target = video, args=queue)
+    p2 = Process(target = inputText, args=queue)
+
+    p1.start()
+    p2.start()
+
+    p1.join()
+    p2.join()
