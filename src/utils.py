@@ -1,4 +1,5 @@
 import pickle
+from re import L
 import numpy as np
 import os
 import random
@@ -170,6 +171,21 @@ def augmentation(img, class_id):
                 break
     else:
         pass
+
+def class_dict():
+    dict_class = {
+        0 : 'airplane',
+        1 : 'automobile',
+        2 : 'bird',
+        3 : 'cat',
+        4 : 'deer',
+        5 : 'dog',
+        6 : 'frog',
+        7 : 'horse',
+        8 : 'ship',
+        9 : 'truck',
+    }
+    return dict_class
 
 if __name__ == '__main__':
 

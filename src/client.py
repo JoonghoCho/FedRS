@@ -82,7 +82,7 @@ class Client():
         self.loss_fn = tf.keras.losses.CategoricalCrossentropy()
         self.train_acc_metric = tf.keras.metrics.CategoricalAccuracy()
         self.val_acc_metric = tf.keras.metrics.CategoricalAccuracy()
-
+        best_val_acc = 0
         for epoch in range(self.update_config['local_epochs']):
             print("\nStart of epoch %d" % (epoch,))
             start_time = time.time()
@@ -112,13 +112,15 @@ class Client():
             self.val_acc_metric.reset_states()
             print("Validation acc: %.4f" % (float(val_acc),))
             print("Time taken: %.2fs" % (time.time() - start_time))
+            if best_val_acc < val_acc:
+                self.model.save_weights(self.weight_path)
 
 
         self.weights = self.model.get_weights()
         # self.weights_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/client{}/weights/weight'.format(self.client_id)))
         # if not os.path.exists(os.path.dirname(self.weights_path)):
         #     os.makedirs(os.path.dirname(self.weights_path))
-        self.model.save_weights(self.weight_path)
+        # self.model.save_weights(self.weight_path)
         # self.weights = np.array(self.weights[0])
 
     def diff_weights(self):
@@ -167,23 +169,33 @@ class Client():
             return self.class_dict[np.argmax(self.prediction)]
     
         
-def get_client(update_config, class_dict):
-    return Client(client_id = 1, update_config = update_config, round = 1, c = 0, class_dict = class_dict)
+def get_client(update_config, class_dict, client_id = 1):
+    return Client(client_id= client_id, update_config = update_config, round = 1, c = 0, class_dict = class_dict)
 
 if __name__ == '__main__':
+#     gpus = tf.config.experimental.list_physical_devices('GPU')
+#     if gpus:
+#     # 텐서플로가 첫 번째 GPU만 사용하도록 제한
+#         try:
+#             tf.config.experimental.set_visible_devices(gpus[1], 'GPU')
+#         except RuntimeError as e:
+#             # 프로그램 시작시에 접근 가능한 장치가 설정되어야만 합니다
+#             print(e)
     gpus = tf.config.experimental.list_physical_devices('GPU')
     if gpus:
-    # 텐서플로가 첫 번째 GPU만 사용하도록 제한
+    # 텐서플로가 첫 번째 GPU에 1GB 메모리만 할당하도록 제한
         try:
-            tf.config.experimental.set_visible_devices(gpus[1], 'GPU')
+            tf.config.experimental.set_virtual_device_configuration(
+                gpus[0],
+                [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=1024 * 10)])
         except RuntimeError as e:
-            # 프로그램 시작시에 접근 가능한 장치가 설정되어야만 합니다
+            # 프로그램 시작시에 가상 장치가 설정되어야만 합니다
             print(e)
 
     update_config = {
         'seed' : 0,
         'num_classes' : 10,
-        'local_epochs' : 1,
+        'local_epochs' : 30,
         'local_batch_size' : 100,
         'img_shape' : (100, 100, 3),
         'learning_rate' : 0.01
@@ -211,16 +223,10 @@ if __name__ == '__main__':
     # # models.save_weights(model_weights_path)
     # client = trainClient(client_id = 1, update_config = update_config, weights = init_weights, round = 1, c = 0)
     # client.send_update()
-    class_dict = {
-        0 : 'Coke',
-        1 : 'Fanta',
-        2 : 'Toreta',
-        3 : 'Powerade'
-    }
-    client = get_client(update_config, class_dict)
-    import cv2
-    filepath = '/home/joongho/FL/pepsi.png'
-    img = cv2.imread(filepath, cv2.IMREAD_COLOR)
-    aug_img = utils.boundBox(img, show = False)
-    # pre_img = utils.preprocessData(aug_img)
-    print(client.predict(aug_img))
+
+    client1 = get_client(update_config, utils.class_dict(), 1)
+    client1.update_model()
+    client2 = get_client(update_config, utils.class_dict(), 2)
+    client2.update_model()
+    client3 = get_client(update_config, utils.class_dict(), 3)
+    client3.update_model()
