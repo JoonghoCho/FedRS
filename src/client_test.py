@@ -51,6 +51,6 @@ if __name__ == '__main__':
             print(e)
     history = list()
     for i in range(3):
-        history.append = training(i+1)
+        history.append(training(i+1))
 
 

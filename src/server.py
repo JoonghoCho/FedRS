@@ -58,7 +58,14 @@ class Server():
     
     def broad_weights(self):
         for id in self.id:
-            self.q_client.appendleft(Client(id+1, update_config=self.update_config, weights = self.init_weights, round = self.round, c = self.global_c))
+            self.q_client.appendleft(Client(
+                id+1, 
+                update_config=self.update_config, 
+                # weights = self.init_weights, 
+                round = self.round, 
+                c = self.global_c,
+                class_dict = utils.class_dict()
+                ))
 
     def aggregate_model(self):
         agg_weights = list()
@@ -74,17 +81,24 @@ class Server():
             weights = self.q_weights.pop()
             agg_weights.append(copy.deepcopy(weights))
             c = self.q_c.pop()
-            agg_c.aapend(copy.deppcopy(c))
-        self.avg_weights = [0 for i in range(len(self.init_weights))]
+            agg_c.append(copy.deepcopy(c))
+        self.avg_weights = list()
         self.global_c = np.mean(agg_c)
 
-        for layer in range(len(self.init_weights)):
-            for num in range(self.clients_num):
-                self.avg_weights[layer] += agg_weights[num][layer]
-            self.avg_weights[layer] = self.avg_weights[layer] / self.clients_num
+        for i, j, k in zip(weights[0], weights[1], weights[2]):
+            self.avg_weights.append((i + j + k) / 3)
+        init_weights = list()
+        for i, j in zip(self.init_weights, self.avg_weights):
+            init_weights.append(i - j)
+        self.init_weights = init_weights
+
+        # for layer in range(len(self.init_weights)):
+        #     for num in range(self.clients_num):
+        #         self.avg_weights[layer] += agg_weights[num][layer]
+        #     self.avg_weights[layer] = self.avg_weights[layer] / self.clients_num
         
-        for layer in range(len(self.init_weights)):
-            self.init_weights[layer] -= self.avg_weights[layer]
+        # for layer in range(len(self.init_weights)):
+        #     self.init_weights[layer] -= self.avg_weights[layer]
 
     def evaluate(self):
         self.model.set_weights(self.init_weights)
@@ -108,19 +122,30 @@ class SLServer():
         self.folder_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
             
 if __name__ == '__main__':
+    # gpus = tf.config.experimental.list_physical_devices('GPU')
+    # if gpus:
+    # # 텐서플로가 첫 번째 GPU만 사용하도록 제한
+    #     try:
+    #         tf.config.experimental.set_visible_devices(gpus[1], 'GPU')
+    #     except RuntimeError as e:
+    #         # 프로그램 시작시에 접근 가능한 장치가 설정되어야만 합니다
+    #         print(e)
     gpus = tf.config.experimental.list_physical_devices('GPU')
     if gpus:
-    # 텐서플로가 첫 번째 GPU만 사용하도록 제한
+    # 텐서플로가 첫 번째 GPU에 1GB 메모리만 할당하도록 제한
         try:
             tf.config.experimental.set_visible_devices(gpus[1], 'GPU')
+            tf.config.experimental.set_virtual_device_configuration(
+                gpus[1],
+                [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=1024 * 10)])
         except RuntimeError as e:
-            # 프로그램 시작시에 접근 가능한 장치가 설정되어야만 합니다
+            # 프로그램 시작시에 가상 장치가 설정되어야만 합니다
             print(e)
     update_config = {
         'seed' : 0,
         'num_classes' : 10,
-        'local_epochs' : 2,
-        'local_batch_size' : 100,
+        'local_epochs' : 1,
+        'local_batch_size' : 32,
         'img_shape' : (100, 100, 3),
         'learning_rate' : 0.001
     }

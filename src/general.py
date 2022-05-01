@@ -39,12 +39,28 @@ if __name__ == '__main__':
     if gpus:
     # 텐서플로가 첫 번째 GPU에 1GB 메모리만 할당하도록 제한
         try:
+            tf.config.experimental.set_visible_devices(gpus[1], 'GPU')
             tf.config.experimental.set_virtual_device_configuration(
-                gpus[0],
+                gpus[1],
                 [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=1024 * 10)])
         except RuntimeError as e:
             # 프로그램 시작시에 가상 장치가 설정되어야만 합니다
             print(e)
     history = training()
+    fig, loss_ax = plt.subplots()
+    acc_ax = loss_ax.twinx()
+
+    loss_ax.plot(history.history['val_loss'], 'r', label='val loss')
+    loss_ax.plot(history.history['loss'], 'y', label = 'train loss')
+    loss_ax.set_xlabel('epoch')
+    loss_ax.set_ylabel('loss')
+    loss_ax.legend(loc='upper left')
+
+    acc_ax.plot(history.history['acc'], 'b', label='train acc')
+    acc_ax.plot(history.history['val_acc'], 'g', label='val acc')
+    acc_ax.set_ylabel('accuracy')
+    acc_ax.legend(loc='upper right')
+
+    plt.savefig('./general.png')
 
 

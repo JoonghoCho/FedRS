@@ -1,0 +1,44 @@
+Found 50000 files belonging to 10 classes.
+Using 40000 files for training.
+Found 50000 files belonging to 10 classes.
+Using 10000 files for validation.
+round : 0 start
+client id : 2
+Found 15000 files belonging to 3 classes.
+Using 12000 files for training.
+Found 15000 files belonging to 3 classes.
+Using 3000 files for validation.
+
+Start of epoch 0
+Training loss (for one batch) at step 0: 3.4318
+Seen so far: 32 samples
+Training loss (for one batch) at step 200: 1.0973
+Seen so far: 6432 samples
+Training acc over epoch: 0.3273
+Validation acc: 0.3413
+Time taken: 318.38s
+/data_disk/home/joongho/.local/lib/python3.8/site-packages/numpy/lib/npyio.py:518: VisibleDeprecationWarning: Creating an ndarray from ragged nested sequences (which is a list-or-tuple of lists-or-tuples-or ndarrays with different lengths or shapes) is deprecated. If you meant to do this, you must specify 'dtype=object' when creating the ndarray.
+  arr = np.asanyarray(arr)
+client id : 1
+Found 15000 files belonging to 3 classes.
+Using 12000 files for training.
+Found 15000 files belonging to 3 classes.
+Using 3000 files for validation.
+
+Start of epoch 0
+Training loss (for one batch) at step 0: 3.7825
+Seen so far: 32 samples
+Training loss (for one batch) at step 200: 0.9181
+Seen so far: 6432 samples
+Training acc over epoch: 0.4942
+Validation acc: 0.5790
+Time taken: 323.60s
+client id : 3
+Found 20000 files belonging to 4 classes.
+Using 16000 files for training.
+Found 20000 files belonging to 4 classes.
+Using 4000 files for validation.
+
+Start of epoch 0
+Training loss (for one batch) at step 0: 4.2347
+Seen so far: 32 samples
