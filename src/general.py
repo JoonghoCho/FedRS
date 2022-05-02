@@ -32,7 +32,7 @@ def training():
         mode = 'max',
         save_best_only = True
     )
-    return model.fit(train_DS, validation_data = val_DS, epochs = 30, callbacks = [model_checkpoint_callback])
+    return model.fit(train_DS, validation_data = val_DS, epochs = 15, callbacks = [model_checkpoint_callback])
 
 if __name__ == '__main__':
     gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -56,11 +56,16 @@ if __name__ == '__main__':
     loss_ax.set_ylabel('loss')
     loss_ax.legend(loc='upper left')
 
-    acc_ax.plot(history.history['acc'], 'b', label='train acc')
-    acc_ax.plot(history.history['val_acc'], 'g', label='val acc')
+    acc_ax.plot(history.history['accuracy'], 'b', label='train acc')
+    acc_ax.plot(history.history['val_accuracy'], 'g', label='val acc')
     acc_ax.set_ylabel('accuracy')
     acc_ax.legend(loc='upper right')
-
+    plt.plot(history.history['val_loss'], 'r', label='val loss')
+    plt.plot(history.history['loss'], 'y', label = 'train loss')
+    plt.plot(history.history['accuracy'], 'b', label='train acc')
+    plt.plot(history.history['val_accuracy'], 'g', label='val acc')
+    plt.legend(loc='upper left')
+    plt.xlabel('epochs')
     plt.savefig('./general.png')
 
 

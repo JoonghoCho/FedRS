@@ -13,7 +13,7 @@ import utils
 from sklearn.model_selection import train_test_split
 
 class Client():
-    def __init__(self, client_id : int, update_config : dict, round : int, c, class_dict : dict):
+    def __init__(self, client_id : int, update_config : dict, weights, round : int, c, class_dict : dict):
         self.client_id = client_id
         self.update_config = update_config
         # self.trainData = self.unpickle(os.path.join('/home/joongho/FL/', 'data/clients/client' + str(self.client_id)))
@@ -24,7 +24,7 @@ class Client():
         # self.train_DS, self.val_DS = utils.data_loader(self.file_path, 
         #                                             img_size = (self.update_config['img_shape'][0], self.update_config['img_shape'][1]),
         #                                             num_classes=self.update_config['num_classes'])
-        # self.pre_weights = weights
+        self.pre_weights = weights
         self.round = round
         self.global_c = c
         self.local_c = copy.deepcopy(self.global_c)
@@ -32,11 +32,16 @@ class Client():
                                             num_classes = self.update_config['num_classes'])
         self.weight_path = os.path.join(os.path.dirname(os.path.abspath(os.path.dirname(__file__))), ('models/clients/client{}/weights/weight'.format(self.client_id))) 
         self.class_dict = class_dict
-        if not os.path.exists(os.path.dirname(self.weight_path)):
-            os.makedirs(os.path.dirname(self.weight_path))
+
+        
+        if weights is not None:
+            self.pre_weights = weights
         else:
+            if not os.path.exists(os.path.dirname(self.weight_path)):
+                os.makedirs(os.path.dirname(self.weight_path))
             self.model.load_weights(self.weight_path)
-        self.pre_weights = self.model.get_weights()
+            self.pre_weights = self.model.get_weights()
+        self.model.set_weights(self.pre_weights)
         tf.random.set_seed(self.update_config['seed'])
     # def unpickle(self, file):
     #     with open(file, 'rb') as fo:

@@ -8,6 +8,7 @@ import random
 import os
 from collections import deque
 import utils
+import matplotlib.pyplot as plt
 
 class Server():
     def __init__(self, update_config : dict, fed_config : dict):
@@ -61,7 +62,7 @@ class Server():
             self.q_client.appendleft(Client(
                 id+1, 
                 update_config=self.update_config, 
-                # weights = self.init_weights, 
+                weights = self.init_weights, 
                 round = self.round, 
                 c = self.global_c,
                 class_dict = utils.class_dict()
@@ -83,9 +84,14 @@ class Server():
             c = self.q_c.pop()
             agg_c.append(copy.deepcopy(c))
         self.avg_weights = list()
-        self.global_c = np.mean(agg_c)
+        # self.global_c = np.mean(agg_c)
+        avg_c = list()
 
-        for i, j, k in zip(weights[0], weights[1], weights[2]):
+        for i, j, k in zip(agg_c[0], agg_c[1], agg_c[2]):
+            avg_c.append((i + j + k) / 3)
+        self.global_c = avg_c
+
+        for i, j, k in zip(agg_weights[0], agg_weights[1], agg_weights[2]):
             self.avg_weights.append((i + j + k) / 3)
         init_weights = list()
         for i, j in zip(self.init_weights, self.avg_weights):
@@ -102,6 +108,11 @@ class Server():
 
     def evaluate(self):
         self.model.set_weights(self.init_weights)
+        self.model.compile(
+            optimizer = tf.keras.optimizers.Adam(learning_rate = 0.001),
+            loss = tf.keras.losses.CategoricalCrossentropy(),
+            metrics = ['accuracy']
+            )
         accuracy = self.model.evaluate(self.testData)
         self.acc.append(accuracy[1])
         self.loss.append(accuracy[0])
@@ -116,6 +127,23 @@ class Server():
             self.broad_weights()
             self.aggregate_model()
             self.evaluate()
+        fig, loss_ax = plt.subplots()
+        acc_ax = loss_ax.twinx()
+
+        plt.plot(self.loss, 'r', label = 'loss')
+        plt.plot(self.acc, 'b', label = 'acc')
+        plt.legend(loc = 'upper left')
+        plt.xlabel('round')
+        plt.savefig('./fl.png')
+        # loss_ax.plot(self.loss, 'r', label = 'loss')
+        # loss_ax.set_xlabel('round')
+        # loss_ax.set_ylabel('loss')
+        # loss_ax.legend(loc = 'upper left')
+
+        # acc_ax.plot(self.acc, 'b', label = 'acc')
+        # acc_ax.set_ylabel('accuracy')
+        # acc_ax.legend(loc='upper right')
+        # plt.savefig('./fl.png')
             
 class SLServer():
     def __init__(self):
